@@ -25,6 +25,7 @@ before any client account is handed out.
   sent → paid/overdue, manual payment recording for money taken offline
 - Delivery: upload finished films and stills against a project; they appear
   in that client's portal immediately
+- Print / PDF of any invoice, for clients and bookkeepers
 - Dashboard: active projects, outstanding and overdue totals, upcoming
   shoots, recent activity
 
@@ -63,6 +64,8 @@ In the Supabase SQL editor, run the files in `supabase/migrations/` in order:
 3. `20260101000002_deliverables.sql` — file delivery table, the private
    `deliverables` storage bucket, and its storage policies
 4. `20260101000003_email.sql` — notification timestamps
+5. `20260101000004_client_archive.sql` — archiving, and the triggers that stop
+   a delete destroying paid invoices
 
 Or, with the Supabase CLI linked to your project:
 
@@ -226,6 +229,13 @@ else's records.
 Totals are derived in the database too: line item amounts are a generated
 column, and triggers recalculate the invoice subtotal, tax and total on every
 change, so a tampered form can't set its own price.
+
+Financial records are protected the same way. A paid invoice cannot be
+deleted, and neither can a client who has one — otherwise the `ON DELETE
+CASCADE` would quietly take their paid invoices with them. Both refusals are
+database triggers rather than app checks, so they hold no matter which client
+or key the delete arrives through. **Archive** a finished client instead: they
+drop out of the working list, keep every record, and can be restored.
 
 ## Deploying to Vercel
 

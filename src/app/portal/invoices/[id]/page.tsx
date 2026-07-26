@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { InvoiceDocument } from "@/components/invoice-document";
 import { PayPalCheckout } from "@/components/paypal-checkout";
-import { Card, CardHeader, PageHeader } from "@/components/ui";
+import { ButtonLink, Card, CardHeader, PageHeader } from "@/components/ui";
 import { requireClient } from "@/lib/auth";
 import { currency, isPayPalConfigured } from "@/lib/env";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
@@ -50,6 +50,11 @@ export default async function PortalInvoicePage({
         eyebrow="Invoice"
         title={invoice.invoice_number}
         description={invoice.projects?.title ?? undefined}
+        actions={
+          <ButtonLink href={`/invoices/${invoice.id}/print`} variant="secondary">
+            Print / PDF
+          </ButtonLink>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { deleteClientAction } from "@/app/admin/clients/actions";
+import {
+  archiveClientAction,
+  restoreClientAction,
+} from "@/app/admin/clients/actions";
+import { DeleteClientButton } from "@/app/admin/clients/[id]/danger-zone";
 import { InviteButton } from "@/app/admin/clients/[id]/invite-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { PlusIcon } from "@/components/icons";
@@ -9,6 +13,7 @@ import { InvoiceListItem, ProjectListItem } from "@/components/records";
 import { ClientStatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import {
+  Badge,
   ButtonLink,
   Card,
   CardHeader,
@@ -59,11 +64,22 @@ export default async function ClientDetailPage({
     0,
   );
   const hasPortalAccess = (portalUsers ?? []).length > 0;
+  const paidInvoiceCount = (invoices ?? []).filter(
+    (invoice) => invoice.status === "paid" || Number(invoice.amount_paid) > 0,
+  ).length;
 
   return (
     <>
       <PageHeader
-        eyebrow="Client"
+        eyebrow={
+          client.archived_at ? (
+            <span className="flex items-center gap-2">
+              Client <Badge tone="neutral">Archived</Badge>
+            </span>
+          ) : (
+            "Client"
+          )
+        }
         title={client.name}
         description={client.company ?? undefined}
         actions={
@@ -208,21 +224,48 @@ export default async function ClientDetailPage({
             </Card>
           ) : null}
 
+          <Card>
+            <CardHeader
+              title={client.archived_at ? "Archived" : "Archive"}
+              description={
+                client.archived_at
+                  ? `Hidden from the client list since ${formatDate(client.archived_at)}. Their records are untouched.`
+                  : "Hides them from the working list. Nothing is deleted, and you can restore them at any time."
+              }
+            />
+            <div className="px-5 py-4">
+              {client.archived_at ? (
+                <form action={restoreClientAction}>
+                  <input type="hidden" name="id" value={client.id} />
+                  <SubmitButton variant="secondary" size="sm" pendingLabel="Restoring…">
+                    Restore client
+                  </SubmitButton>
+                </form>
+              ) : (
+                <ConfirmForm
+                  action={archiveClientAction}
+                  message={`Archive ${client.name}? They'll be hidden from the client list but nothing is deleted.`}
+                >
+                  <input type="hidden" name="id" value={client.id} />
+                  <SubmitButton variant="secondary" size="sm" pendingLabel="Archiving…">
+                    Archive client
+                  </SubmitButton>
+                </ConfirmForm>
+              )}
+            </div>
+          </Card>
+
           <Card className="border-danger/20">
             <CardHeader
               title="Danger zone"
-              description="Deleting removes their projects, tasks and invoices too."
+              description="Permanent deletion, for records created in error."
             />
             <div className="px-5 py-4">
-              <ConfirmForm
-                action={deleteClientAction}
-                message={`Delete ${client.name}? This also deletes their projects, tasks and invoices. This cannot be undone.`}
-              >
-                <input type="hidden" name="id" value={client.id} />
-                <SubmitButton variant="danger" size="sm" pendingLabel="Deleting…">
-                  Delete client
-                </SubmitButton>
-              </ConfirmForm>
+              <DeleteClientButton
+                clientId={client.id}
+                clientName={client.name}
+                paidInvoiceCount={paidInvoiceCount}
+              />
             </div>
           </Card>
         </div>

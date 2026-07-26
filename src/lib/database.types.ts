@@ -59,6 +59,7 @@ export interface Database {
           company: string | null;
           status: ClientStatus;
           notes: string | null;
+          archived_at: Timestamp | null;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -78,6 +79,7 @@ export interface Database {
           company?: string | null;
           status?: ClientStatus;
           notes?: string | null;
+          archived_at?: Timestamp | null;
         };
         Relationships: [];
       };

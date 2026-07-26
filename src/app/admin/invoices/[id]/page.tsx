@@ -72,14 +72,16 @@ export default async function InvoiceDetailPage({
         }
         title={invoice.invoice_number}
         actions={
-          !isPaid ? (
-            <ButtonLink
-              href={`/admin/invoices/${invoice.id}/edit`}
-              variant="secondary"
-            >
-              Edit
+          <>
+            <ButtonLink href={`/invoices/${invoice.id}/print`} variant="secondary">
+              Print / PDF
             </ButtonLink>
-          ) : null
+            {!isPaid ? (
+              <ButtonLink href={`/admin/invoices/${invoice.id}/edit`}>
+                Edit
+              </ButtonLink>
+            ) : null}
+          </>
         }
       />
 

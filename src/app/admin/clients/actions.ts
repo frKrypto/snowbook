@@ -95,14 +95,69 @@ export async function updateClientAction(
   redirect(`/admin/clients/${clientId}`);
 }
 
-export async function deleteClientAction(formData: FormData) {
+/**
+ * Hides a finished client from the working list without touching their
+ * records. This is the intended way to clear someone out — deleting is only
+ * for records created in error.
+ */
+export async function archiveClientAction(formData: FormData) {
   await requireAdmin();
 
   const clientId = requiredUuid(formData, "id", "Client");
   const supabase = await createClient();
-  // Projects, tasks and invoices cascade from the FK definitions.
-  const { error } = await supabase.from("clients").delete().eq("id", clientId);
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", clientId);
+
   if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+export async function restoreClientAction(formData: FormData) {
+  await requireAdmin();
+
+  const clientId = requiredUuid(formData, "id", "Client");
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ archived_at: null })
+    .eq("id", clientId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/clients");
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+/**
+ * Hard delete. Projects, tasks and invoices cascade from the FK definitions,
+ * so a database trigger refuses this outright when any invoice has been paid —
+ * those are financial records. Archiving is the alternative and the UI says so.
+ */
+export async function deleteClientAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  try {
+    const clientId = requiredUuid(formData, "id", "Client");
+    const supabase = await createClient();
+
+    const { error } = await supabase.from("clients").delete().eq("id", clientId);
+
+    if (error) {
+      // The trigger's message is already written for a human to read.
+      return { error: error.message };
+    }
+  } catch (error) {
+    return { error: toFormError(error) };
+  }
 
   revalidatePath("/admin/clients");
   redirect("/admin/clients");

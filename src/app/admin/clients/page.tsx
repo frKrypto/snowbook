@@ -22,10 +22,10 @@ const STATUS_VALUES = CLIENT_STATUSES.map((status) => status.value);
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; archived?: string }>;
 }) {
   await requireAdmin();
-  const { q, status } = await searchParams;
+  const { q, status, archived } = await searchParams;
 
   const search = (q ?? "").trim();
   const statusFilter = STATUS_VALUES.includes(status as ClientStatus)
@@ -34,10 +34,17 @@ export default async function ClientsPage({
 
   const supabase = await createClient();
 
+  // Archived clients are kept out of the working list unless asked for.
+  const showArchived = archived === "1";
+
   let query = supabase
     .from("clients")
-    .select("id, name, email, company, status, created_at")
+    .select("id, name, email, company, status, archived_at, created_at")
     .order("name");
+
+  query = showArchived
+    ? query.not("archived_at", "is", null)
+    : query.is("archived_at", null);
 
   if (statusFilter) query = query.eq("status", statusFilter);
   if (search) {
@@ -105,19 +112,29 @@ export default async function ClientsPage({
           className="field max-w-xs flex-1"
         />
         <div className="flex items-center gap-1 rounded-lg border border-line bg-surface p-1">
-          <FilterChip href="/admin/clients" label="All" active={!statusFilter} />
+          <FilterChip
+            href="/admin/clients"
+            label="All"
+            active={!statusFilter && !showArchived}
+          />
           {CLIENT_STATUSES.map((option) => (
             <FilterChip
               key={option.value}
               href={`/admin/clients?status=${option.value}`}
               label={option.label}
-              active={statusFilter === option.value}
+              active={!showArchived && statusFilter === option.value}
             />
           ))}
+          <FilterChip
+            href="/admin/clients?archived=1"
+            label="Archived"
+            active={showArchived}
+          />
         </div>
         {statusFilter ? (
           <input type="hidden" name="status" value={statusFilter} />
         ) : null}
+        {showArchived ? <input type="hidden" name="archived" value="1" /> : null}
         <button
           type="submit"
           className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-ink transition hover:bg-surface-sunken"
@@ -131,11 +148,19 @@ export default async function ClientsPage({
           <EmptyState title="Couldn't load clients" description={error.message} />
         ) : !clients || clients.length === 0 ? (
           <EmptyState
-            title={search || statusFilter ? "No matching clients" : "No clients yet"}
+            title={
+              showArchived
+                ? "Nothing archived"
+                : search || statusFilter
+                  ? "No matching clients"
+                  : "No clients yet"
+            }
             description={
-              search || statusFilter
-                ? "Try a different search or clear the status filter."
-                : "Add your first client to start tracking projects and invoices."
+              showArchived
+                ? "Archived clients are hidden from the main list and can be restored at any time."
+                : search || statusFilter
+                  ? "Try a different search or clear the status filter."
+                  : "Add your first client to start tracking projects and invoices."
             }
             action={
               <ButtonLink href="/admin/clients/new" variant="secondary">

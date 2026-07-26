@@ -313,4 +313,74 @@ select public.assert_true(
    where id = '44444444-4444-4444-4444-444444444443'),
   'and that invoice is now overdue');
 
+-- ---------------------------------------------------------------------------
+-- Financial records survive deletes
+--
+-- Invoice 44444444-…41 was marked paid earlier in this file, and belongs to
+-- client 11111111-…11.
+-- ---------------------------------------------------------------------------
+
+do $$
+begin
+  begin
+    delete from public.invoices where id = '44444444-4444-4444-4444-444444444441';
+    raise exception 'FAIL: a paid invoice was deleted';
+  exception when restrict_violation then
+    raise notice 'ok: a paid invoice cannot be deleted';
+  end;
+
+  -- The gap this closes: the cascade used to take paid invoices with it.
+  begin
+    delete from public.clients where id = '11111111-1111-1111-1111-111111111111';
+    raise exception 'FAIL: deleting a client destroyed their paid invoices';
+  exception when restrict_violation then
+    raise notice 'ok: a client with paid invoices cannot be deleted';
+  end;
+end $$;
+
+select public.assert_eq(
+  (select count(*) from public.invoices
+   where id = '44444444-4444-4444-4444-444444444441'), 1,
+  'the paid invoice is still there after both attempts');
+select public.assert_eq(
+  (select count(*) from public.clients
+   where id = '11111111-1111-1111-1111-111111111111'), 1,
+  'and so is the client');
+
+-- A client with nothing paid is still removable, and still cascades.
+insert into public.clients (id, name, email, status) values
+  ('55555555-5555-5555-5555-555555555555', 'Disposable', 'gone@example.com', 'lead');
+insert into public.projects (id, client_id, title) values
+  ('55555555-5555-5555-5555-555555555501', '55555555-5555-5555-5555-555555555555', 'Draft work');
+insert into public.invoices (id, client_id, status) values
+  ('55555555-5555-5555-5555-555555555502', '55555555-5555-5555-5555-555555555555', 'draft');
+
+delete from public.clients where id = '55555555-5555-5555-5555-555555555555';
+
+select public.assert_eq(
+  (select count(*) from public.clients
+   where id = '55555555-5555-5555-5555-555555555555'), 0,
+  'a client with no paid invoices can still be deleted');
+select public.assert_eq(
+  (select count(*) from public.projects
+   where id = '55555555-5555-5555-5555-555555555501'), 0,
+  'and their projects still cascade away');
+select public.assert_eq(
+  (select count(*) from public.invoices
+   where id = '55555555-5555-5555-5555-555555555502'), 0,
+  'and their unpaid invoices too');
+
+-- Archiving hides without destroying.
+update public.clients
+set archived_at = now()
+where id = '22222222-2222-2222-2222-222222222222';
+
+select public.assert_eq(
+  (select count(*) from public.clients where archived_at is not null), 1,
+  'archiving marks the client without removing the row');
+select public.assert_eq(
+  (select count(*) from public.projects
+   where client_id = '22222222-2222-2222-2222-222222222222'), 1,
+  'an archived client keeps their projects');
+
 select '=== ALL RLS TESTS PASSED ===' as result;

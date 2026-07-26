@@ -5,20 +5,26 @@ pick up next. Delete or fold into issues once the project has a tracker.
 
 ## Status
 
-The MVP covers the three areas it set out to: client management, project
-management, and invoicing with PayPal payments. Build, typecheck and lint are
-clean, and the row level security policies have a test suite behind them
-(`npm run test:rls`, 32 assertions).
+The MVP covers the three areas it set out to — client management, project
+management, and invoicing with PayPal payments — plus file delivery,
+transactional email, invoice printing and theming. Build, typecheck and lint
+are clean, and the data-access rules have a test suite behind them
+(`npm run test:rls`, 54 assertions).
 
 **What has been verified**
 
-- Production build across all 25 routes
-- TypeScript and ESLint clean
+- Production build across all 28 routes; TypeScript and ESLint clean
 - The RLS policies, against a real Postgres cluster: client isolation, draft
   invoices hidden, clients unable to write payment state or escalate their own
-  role, admin full access, anonymous denied
+  role, admin full access, anonymous denied — covering deliverables and
+  `storage.objects` as well as the core tables
+- Paid invoices, and clients holding them, cannot be deleted; unpaid ones still
+  cascade normally
 - Invoice totals derived correctly by trigger on insert, update and delete of
   line items
+- In a real browser: the invoice line-item form across secure and non-secure
+  origins, both colour themes with persistence, and that printing forces the
+  light palette even for a dark-mode viewer
 
 **What has NOT been verified**
 
@@ -31,9 +37,9 @@ Nothing has run against a live Supabase project yet. Specifically untested:
 
 ## Before you start
 
-Create the Supabase project, run both migrations, then `npm run admin:create`
-and `npm run db:seed`, and click through both sides. See the README for the
-full sequence.
+Create the Supabase project, run the five migrations, then
+`npm run admin:create` and `npm run db:seed`, and click through both sides. See
+the README for the full sequence.
 
 The one thing that will stop you cold is **email**. Supabase's built-in sender
 is rate-limited to a couple of messages an hour and tends to land in spam, so
@@ -45,38 +51,16 @@ it.
 PayPal can wait. With those environment variables blank the portal degrades to
 a "contact the studio" note instead of the pay button.
 
-## Open decision: deleting a client with paid invoices
-
-There is an inconsistency worth resolving before real data goes in.
-
-Deleting a paid invoice directly is blocked, on the grounds that it is part of
-the financial record. But deleting a *client* cascades through the foreign key
-and silently takes their paid invoices with it. Those two rules disagree.
-
-Two reasonable fixes:
-
-1. Refuse to delete a client who has paid invoices, mirroring the invoice rule.
-2. Archive clients instead of deleting them — a status value plus a filter on
-   the list view.
-
-Archiving is probably the right answer for a business, and it is the smaller
-change of the two in practice. Needs a decision either way.
-
 ## Next up, in priority order
 
-1. **Print / PDF view of an invoice.** Clients and bookkeepers ask for one
-   constantly. `InvoiceDocument` is already a self-contained component and
-   `globals.css` has a `no-print` hook, so this is mostly print styles plus a
-   route.
-
-2. **Per-file titles and reordering on deliveries.** Files currently show their
+1. **Per-file titles and reordering on deliveries.** Files currently show their
    filename; letting the studio label them ("Highlight film", "Full ceremony")
    and set an order would make the portal read better.
 
-3. **Resend or revoke a portal invite.** Right now the only way to cut off
+2. **Resend or revoke a portal invite.** Right now the only way to cut off
    access is deleting the auth user in the Supabase console.
 
-4. **Overdue reminder emails.** The templates and sending layer are in place;
+3. **Overdue reminder emails.** The templates and sending layer are in place;
    this needs a scheduled job (pg_cron or a Vercel cron route) that finds
    overdue invoices and nudges once, without nagging daily.
 
@@ -96,7 +80,8 @@ Worth knowing, none of them urgent:
   events table. Fine for a dashboard; would need a proper audit log if activity
   history ever becomes a feature.
 - **No way to revoke portal access** once a client has been invited, short of
-  deleting the auth user in the Supabase console.
+  deleting the auth user in the Supabase console. Archiving a client hides them
+  from the admin list but does not sign them out of their portal.
 
 ## Deliberately out of scope
 
@@ -106,15 +91,19 @@ Each is a new table plus a route group alongside the existing ones.
 
 ## Changelog
 
+- **Client deletion hole closed.** Database triggers now refuse to delete a
+  paid invoice, or a client holding one, so the cascade can no longer destroy
+  financial records. Archiving replaces deletion for finished clients.
+- **Invoice print / PDF view added** at `/invoices/[id]/print`, shared by both
+  roles and scoped by RLS. Print styles force the light palette so a dark-mode
+  viewer doesn't print a black page.
 - **Email added.** Invoice sent, payment receipt, studio payment alert and
   delivery-ready notifications via Resend. Optional: without an API key the app
   behaves exactly as before and says so instead of pretending to send.
-
 - **Dark mode added.** Theme-aware design tokens plus a light/dark/system
   toggle. An inline script resolves the preference before first paint, which is
   why `globals.css` only carries a `[data-theme="dark"]` block and no
   `prefers-color-scheme` duplicate.
-
 - **File delivery added.** Uploads go browser-to-Storage against a private
   bucket, downloads use 60-second signed URLs, and isolation is covered by the
   RLS suite for both the table and `storage.objects`.

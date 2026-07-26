@@ -133,4 +133,47 @@ body {
   .no-print {
     display: none !important;
   }
+
+  /*
+   * Always print on white with dark text. Without this a viewer in dark mode
+   * would print a near-black page, and browsers drop the background anyway —
+   * leaving pale text on white.
+   */
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: light;
+
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-sunken: #ffffff;
+    --color-line: #d8d3c9;
+    --color-line-strong: #b9b2a4;
+    --color-ink: #000000;
+    --color-ink-muted: #3d3830;
+    --color-ink-faint: #5b5648;
+    --color-brand: #1f2a24;
+    --color-accent: #7a5733;
+    --color-positive: #2c5137;
+    --color-positive-soft: #ffffff;
+    --color-warning: #6d4718;
+    --color-warning-soft: #ffffff;
+    --color-danger: #7d2b23;
+    --color-danger-soft: #ffffff;
+    --color-info: #2c4055;
+    --color-info-soft: #ffffff;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  /* Borders and shadows waste toner and print muddy. */
+  .print-plain {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  @page {
+    margin: 16mm;
+  }
 }
