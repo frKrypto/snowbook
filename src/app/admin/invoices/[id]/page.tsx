@@ -5,8 +5,11 @@ import { notFound } from "next/navigation";
 import {
   deleteInvoiceAction,
   markInvoicePaidAction,
-  markInvoiceSentAction,
 } from "@/app/admin/invoices/actions";
+import {
+  MarkSentButton,
+  ResendInvoiceButton,
+} from "@/app/admin/invoices/[id]/invoice-email-actions";
 import { ConfirmForm } from "@/components/confirm-form";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { SubmitButton } from "@/components/submit-button";
@@ -102,12 +105,11 @@ export default async function InvoiceDetailPage({
             />
             <div className="space-y-3 px-5 py-4">
               {invoice.status === "draft" ? (
-                <form action={markInvoiceSentAction}>
-                  <input type="hidden" name="id" value={invoice.id} />
-                  <SubmitButton className="w-full" pendingLabel="Marking sent…">
-                    Mark as sent
-                  </SubmitButton>
-                </form>
+                <MarkSentButton invoiceId={invoice.id} />
+              ) : null}
+
+              {!isPaid && invoice.status !== "draft" ? (
+                <ResendInvoiceButton invoiceId={invoice.id} />
               ) : null}
 
               {!isPaid && invoice.status !== "draft" ? (
@@ -153,6 +155,10 @@ export default async function InvoiceDetailPage({
                 },
                 { term: "Created", value: formatDateTime(invoice.created_at) },
                 { term: "Sent", value: formatDateTime(invoice.sent_at) },
+                {
+                  term: "Emailed",
+                  value: formatDateTime(invoice.last_emailed_at),
+                },
                 { term: "Paid", value: formatDateTime(invoice.paid_at) },
                 {
                   term: "PayPal txn",

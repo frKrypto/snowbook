@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { ActionState } from "@/lib/action-state";
 import { requireAdmin } from "@/lib/auth";
+import { sendDeliveryNotification } from "@/lib/email/notifications";
 import { DELIVERABLES_BUCKET } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -60,6 +61,36 @@ export async function recordDeliverableAction(
     revalidatePath(`/admin/projects/${projectId}`);
     revalidatePath(`/portal/projects/${projectId}`);
     return { message: `${fileName} delivered.` };
+  } catch (error) {
+    return { error: toFormError(error) };
+  }
+}
+
+/**
+ * Tells the client their files are ready.
+ *
+ * Deliberately a separate, explicit step rather than firing on every upload —
+ * a multi-file delivery would otherwise mean one email per file.
+ */
+export async function notifyDeliveryAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  try {
+    const projectId = requiredUuid(formData, "project_id", "Project");
+    const result = await sendDeliveryNotification(projectId);
+
+    revalidatePath(`/admin/projects/${projectId}`);
+
+    if (result.status === "sent") {
+      return { message: "The client has been emailed." };
+    }
+    if (result.status === "skipped") {
+      return { error: `Nothing sent: ${result.reason}.` };
+    }
+    return { error: result.error };
   } catch (error) {
     return { error: toFormError(error) };
   }

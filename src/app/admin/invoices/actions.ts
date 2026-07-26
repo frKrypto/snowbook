@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
 import { requireAdmin } from "@/lib/auth";
+import { sendInvoiceNotification } from "@/lib/email/notifications";
 import { createClient } from "@/lib/supabase/server";
 import {
   ValidationError,
@@ -215,22 +216,74 @@ export async function updateInvoiceAction(
   redirect(`/admin/invoices/${invoiceId}`);
 }
 
-export async function markInvoiceSentAction(formData: FormData) {
+/**
+ * Marks a draft as sent and emails it to the client.
+ *
+ * The email is best-effort: if it fails the invoice is still sent, because it
+ * is now visible in the portal either way. The result comes back so the UI can
+ * say whether the client was actually notified.
+ */
+export async function markInvoiceSentAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   await requireAdmin();
 
-  const invoiceId = requiredUuid(formData, "id", "Invoice");
-  const supabase = await createClient();
+  try {
+    const invoiceId = requiredUuid(formData, "id", "Invoice");
+    const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("invoices")
-    .update({ status: "sent", sent_at: new Date().toISOString() })
-    .eq("id", invoiceId)
-    .eq("status", "draft");
+    const { error } = await supabase
+      .from("invoices")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", invoiceId)
+      .eq("status", "draft");
 
-  if (error) throw new Error(error.message);
+    if (error) return { error: error.message };
 
-  revalidatePath("/admin/invoices");
-  revalidatePath(`/admin/invoices/${invoiceId}`);
+    const emailResult = await sendInvoiceNotification(invoiceId);
+
+    revalidatePath("/admin/invoices");
+    revalidatePath(`/admin/invoices/${invoiceId}`);
+    revalidatePath("/portal");
+
+    if (emailResult.status === "sent") {
+      return { message: "Marked sent and emailed to the client." };
+    }
+    if (emailResult.status === "skipped") {
+      return {
+        message: `Marked sent — it's visible in their portal. No email: ${emailResult.reason}.`,
+      };
+    }
+    return {
+      error: `Marked sent, but the email failed: ${emailResult.error}. You can resend it below.`,
+    };
+  } catch (error) {
+    return { error: toFormError(error) };
+  }
+}
+
+/** Re-sends the invoice email without changing the invoice's status. */
+export async function resendInvoiceEmailAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  try {
+    const invoiceId = requiredUuid(formData, "id", "Invoice");
+    const result = await sendInvoiceNotification(invoiceId);
+
+    revalidatePath(`/admin/invoices/${invoiceId}`);
+
+    if (result.status === "sent") return { message: "Invoice emailed again." };
+    if (result.status === "skipped") {
+      return { error: `Nothing sent: ${result.reason}.` };
+    }
+    return { error: result.error };
+  } catch (error) {
+    return { error: toFormError(error) };
+  }
 }
 
 /** Records a payment taken outside PayPal (bank transfer, cash, cheque). */

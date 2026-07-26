@@ -148,6 +148,7 @@ export default async function ProjectDetailPage({
             <DeliverablesPanel
               projectId={project.id}
               deliverables={deliverables ?? []}
+              deliveryNotifiedAt={project.delivery_notified_at}
             />
           </Card>
 

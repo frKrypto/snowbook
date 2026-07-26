@@ -55,6 +55,32 @@ export function siteUrl(): string {
   return "http://localhost:3000";
 }
 
+/* -------------------------------------------------------------------------- */
+/* Email                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export const resendApiKey = () =>
+  required("RESEND_API_KEY", process.env.RESEND_API_KEY);
+
+/** Must be an address on a domain verified with the email provider. */
+export const emailFrom = () => required("EMAIL_FROM", process.env.EMAIL_FROM);
+
+export const emailReplyTo = () => process.env.EMAIL_REPLY_TO || undefined;
+
+/** Name used in email subjects, signatures and the portal footer. */
+export const studioName = () => process.env.NEXT_PUBLIC_STUDIO_NAME ?? "Snowbook";
+
+/** Where "you got paid" alerts go. Alerts are skipped when unset. */
+export const studioNotificationEmail = () =>
+  process.env.STUDIO_NOTIFICATION_EMAIL || undefined;
+
+/**
+ * Email is optional. Without it the app still works — invoices become visible
+ * in the portal and files still appear, the client just isn't told about it.
+ */
+export const isEmailConfigured = () =>
+  Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+
 export const isPayPalConfigured = () =>
   Boolean(
     process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET,

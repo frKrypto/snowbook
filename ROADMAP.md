@@ -64,19 +64,21 @@ change of the two in practice. Needs a decision either way.
 
 ## Next up, in priority order
 
-1. **Email on invoice send, and on invite.** The biggest workflow gap. Marking
-   an invoice sent only makes it visible in the portal — the client has no idea
-   a bill exists until they happen to log in. This matches the original spec,
-   but it is the thing that makes the tool usable with real clients.
-
-2. **Print / PDF view of an invoice.** Clients and bookkeepers ask for one
+1. **Print / PDF view of an invoice.** Clients and bookkeepers ask for one
    constantly. `InvoiceDocument` is already a self-contained component and
    `globals.css` has a `no-print` hook, so this is mostly print styles plus a
    route.
 
-3. **Per-file titles and reordering on deliveries.** Files currently show their
+2. **Per-file titles and reordering on deliveries.** Files currently show their
    filename; letting the studio label them ("Highlight film", "Full ceremony")
    and set an order would make the portal read better.
+
+3. **Resend or revoke a portal invite.** Right now the only way to cut off
+   access is deleting the auth user in the Supabase console.
+
+4. **Overdue reminder emails.** The templates and sending layer are in place;
+   this needs a scheduled job (pg_cron or a Vercel cron route) that finds
+   overdue invoices and nudges once, without nagging daily.
 
 ## Known limitations
 
@@ -103,6 +105,10 @@ e-signatures, scheduling, automated email sequences, questionnaires and forms.
 Each is a new table plus a route group alongside the existing ones.
 
 ## Changelog
+
+- **Email added.** Invoice sent, payment receipt, studio payment alert and
+  delivery-ready notifications via Resend. Optional: without an API key the app
+  behaves exactly as before and says so instead of pretending to send.
 
 - **Dark mode added.** Theme-aware design tokens plus a light/dark/system
   toggle. An inline script resolves the preference before first paint, which is

@@ -90,6 +90,7 @@ export interface Database {
           status: ProjectStatus;
           event_date: DateOnly | null;
           delivery_due_date: DateOnly | null;
+          delivery_notified_at: Timestamp | null;
           created_at: Timestamp;
           updated_at: Timestamp;
         };
@@ -109,6 +110,7 @@ export interface Database {
           status?: ProjectStatus;
           event_date?: DateOnly | null;
           delivery_due_date?: DateOnly | null;
+          delivery_notified_at?: Timestamp | null;
         };
         Relationships: [
           {
@@ -171,6 +173,7 @@ export interface Database {
           amount_paid: number;
           notes: string | null;
           sent_at: Timestamp | null;
+          last_emailed_at: Timestamp | null;
           paid_at: Timestamp | null;
           paypal_order_id: string | null;
           paypal_transaction_id: string | null;
@@ -202,6 +205,7 @@ export interface Database {
           amount_paid?: number;
           notes?: string | null;
           sent_at?: Timestamp | null;
+          last_emailed_at?: Timestamp | null;
           paid_at?: Timestamp | null;
           paypal_order_id?: string | null;
           paypal_transaction_id?: string | null;

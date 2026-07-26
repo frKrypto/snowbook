@@ -1,5 +1,6 @@
 import "server-only";
 
+import { sendPaymentNotifications } from "@/lib/email/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type RecordPaymentResult =
@@ -61,6 +62,11 @@ export async function recordInvoicePayment(options: {
     .neq("status", "paid");
 
   if (updateError) return { status: "error", message: updateError.message };
+
+  // Receipt to the client, heads-up to the studio. Deliberately awaited but
+  // never allowed to fail the payment — the money has already moved, and
+  // sendEmail swallows its own errors.
+  await sendPaymentNotifications(invoice.id);
 
   return { status: "recorded", invoiceId: invoice.id };
 }

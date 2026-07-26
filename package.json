@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:rls": "bash scripts/test-rls.sh",
     "db:seed": "tsx scripts/seed.ts",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "email:preview": "tsx scripts/preview-emails.ts"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^10.1.2",

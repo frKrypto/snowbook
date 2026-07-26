@@ -56,13 +56,13 @@ Create a project at [supabase.com](https://supabase.com), then fill in
 
 ### 3. Run the migrations
 
-In the Supabase SQL editor, run the two files in `supabase/migrations/` in
-order:
+In the Supabase SQL editor, run the files in `supabase/migrations/` in order:
 
 1. `20260101000000_init.sql` — tables, enums, triggers
 2. `20260101000001_rls.sql` — row level security policies
 3. `20260101000002_deliverables.sql` — file delivery table, the private
    `deliverables` storage bucket, and its storage policies
+4. `20260101000003_email.sql` — notification timestamps
 
 Or, with the Supabase CLI linked to your project:
 
@@ -123,6 +123,36 @@ recording is idempotent, so the invoice can't be double-credited if both land.
 
 For local webhook testing, expose your dev server with a tunnel
 (`ngrok http 3000`) and point the webhook at the tunnel URL.
+
+## Email
+
+Four transactional emails, all sent through [Resend](https://resend.com):
+
+| When | Goes to | What it says |
+| --- | --- | --- |
+| An invoice is marked sent | Client | The amount, the due date, and a link to pay |
+| A payment is confirmed | Client | A receipt |
+| A payment is confirmed | Studio | That you've been paid, and by whom |
+| You press "Notify client" on a delivery | Client | Their files are ready to download |
+
+Set `RESEND_API_KEY` and `EMAIL_FROM` to switch it on. **Without them the app
+still works** — invoices become visible in the portal and files still appear,
+the client just isn't told about it, and the UI says so rather than pretending
+an email went out.
+
+Two deliberate choices:
+
+- **Delivery emails are a separate button**, not automatic on upload. A
+  seven-file delivery would otherwise mean seven emails.
+- **A failed email never rolls back the thing that triggered it.** If the
+  provider is down, the invoice is still marked sent and the payment is still
+  recorded — you just get told the email failed, and there's a resend button.
+
+`npm run email:preview` renders every template to `.email-previews/` so you can
+open them in a browser and edit the copy without sending anything.
+
+Note this is separate from Supabase's own auth emails (the client invite and
+password reset), which are configured under **Authentication → Emails**.
 
 ## File delivery
 
@@ -255,5 +285,6 @@ A couple of things worth knowing:
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test:rls` | Run the row level security test suite |
+| `npm run email:preview` | Render the transactional emails to `.email-previews/` |
 | `npm run db:seed` | Seed demo clients, projects and invoices |
 | `npm run admin:create` | Create or promote an admin account |

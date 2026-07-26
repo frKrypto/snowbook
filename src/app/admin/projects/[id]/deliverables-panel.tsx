@@ -1,16 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 
 import {
   deleteDeliverableAction,
+  notifyDeliveryAction,
   recordDeliverableAction,
 } from "@/app/admin/projects/deliverable-actions";
 import { DELIVERABLES_BUCKET } from "@/lib/storage";
 import { ConfirmForm } from "@/components/confirm-form";
-import { DownloadIcon, FileIcon, TrashIcon, UploadIcon } from "@/components/icons";
+import {
+  DownloadIcon,
+  FileIcon,
+  MailIcon,
+  TrashIcon,
+  UploadIcon,
+} from "@/components/icons";
+import { SubmitButton } from "@/components/submit-button";
 import { Button, EmptyState, FormError, cn } from "@/components/ui";
+import type { ActionState } from "@/lib/action-state";
 import type { Deliverable } from "@/lib/database.types";
 import { formatDate, formatFileSize } from "@/lib/format";
 import { sanitizeFileName, shortId } from "@/lib/id";
@@ -22,12 +31,49 @@ interface PendingUpload {
   error?: string;
 }
 
+function NotifyClientButton({
+  projectId,
+  notifiedAt,
+}: {
+  projectId: string;
+  notifiedAt: string | null;
+}) {
+  const [state, formAction] = useActionState<ActionState, FormData>(
+    notifyDeliveryAction,
+    {},
+  );
+
+  return (
+    <div className="space-y-1.5">
+      <form action={formAction}>
+        <input type="hidden" name="project_id" value={projectId} />
+        <SubmitButton variant="secondary" size="sm" pendingLabel="Emailing…">
+          <MailIcon className="h-4 w-4" />
+          {notifiedAt ? "Notify again" : "Notify client"}
+        </SubmitButton>
+      </form>
+
+      {state.message ? (
+        <p className="text-xs text-positive">{state.message}</p>
+      ) : state.error ? (
+        <p className="text-xs text-danger">{state.error}</p>
+      ) : notifiedAt ? (
+        <p className="text-xs text-ink-faint">
+          Last notified {formatDate(notifiedAt)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function DeliverablesPanel({
   projectId,
   deliverables,
+  deliveryNotifiedAt,
 }: {
   projectId: string;
   deliverables: Deliverable[];
+  deliveryNotifiedAt: string | null;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +193,18 @@ export function DeliverablesPanel({
           description="Upload the finished films, stills or anything else the client should be able to download."
         />
       )}
+
+      {deliverables.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface-sunken/40 px-5 py-3">
+          <p className="text-xs text-ink-muted">
+            Uploads are visible immediately — emailing is a separate step.
+          </p>
+          <NotifyClientButton
+            projectId={projectId}
+            notifiedAt={deliveryNotifiedAt}
+          />
+        </div>
+      ) : null}
 
       <div className="border-t border-line px-5 py-4">
         <FormError message={error} />
