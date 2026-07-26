@@ -35,6 +35,10 @@ before any client account is handed out.
 - Their invoices, with a "Pay now" PayPal checkout
 - Dashboard showing active projects and anything outstanding
 
+**Both** get a light/dark/system theme toggle. The preference is stored per
+browser and applied before first paint, so there is no flash of the wrong
+palette on load; on "system" it follows the OS live.
+
 ## Setup
 
 ### 1. Install

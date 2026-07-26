@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/app/login/login-form";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, FormError } from "@/components/ui";
 import { getSessionContext } from "@/lib/auth";
 
@@ -50,6 +51,10 @@ export default async function LoginPage({
           Clients receive an invite by email. If you need access, contact the
           studio directly.
         </p>
+
+        <div className="mt-6 flex justify-center">
+          <ThemeToggle />
+        </div>
       </div>
     </main>
   );

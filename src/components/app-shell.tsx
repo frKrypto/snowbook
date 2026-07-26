@@ -5,6 +5,7 @@ import { signOutAction } from "@/app/auth/actions";
 import { Wordmark } from "@/components/brand";
 import { SignOutIcon } from "@/components/icons";
 import { NavLink } from "@/components/nav-link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { initials } from "@/lib/format";
 
 export interface NavItem {
@@ -45,16 +46,19 @@ export function AppShell({
             </span>
           </Link>
 
-          {/* Compact sign-out for mobile, where the sidebar footer is hidden. */}
-          <form action={signOutAction} className="lg:hidden">
-            <button
-              type="submit"
-              aria-label="Sign out"
-              className="rounded-lg p-2 text-ink-muted transition hover:bg-surface hover:text-ink"
-            >
-              <SignOutIcon className="h-4.5 w-4.5" />
-            </button>
-          </form>
+          {/* Mobile controls — the sidebar footer holding these is hidden there. */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle />
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                aria-label="Sign out"
+                className="rounded-lg p-2 text-ink-muted transition hover:bg-surface hover:text-ink"
+              >
+                <SignOutIcon className="h-4.5 w-4.5" />
+              </button>
+            </form>
+          </div>
         </div>
 
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:px-3 lg:pb-4">
@@ -77,15 +81,18 @@ export function AppShell({
               ) : null}
             </div>
           </div>
-          <form action={signOutAction} className="mt-2.5">
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-surface hover:text-ink"
-            >
-              <SignOutIcon className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-ink-muted transition hover:bg-surface hover:text-ink"
+              >
+                <SignOutIcon className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

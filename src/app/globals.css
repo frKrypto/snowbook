@@ -44,6 +44,45 @@
   color-scheme: light;
 }
 
+/*
+ * Dark palette. The same warm, editorial feel rather than a cold grey — the
+ * neutrals keep a green/brown cast and the brass accent brightens instead of
+ * inverting.
+ *
+ * Only [data-theme="dark"] is needed here, no prefers-color-scheme duplicate:
+ * the inline script in the layout resolves "system" to a concrete value and
+ * always stamps data-theme on <html> before first paint.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-canvas: #131512;
+  --color-surface: #1b1e1a;
+  --color-surface-sunken: #22261f;
+
+  --color-line: #2e332b;
+  --color-line-strong: #3f463a;
+
+  --color-ink: #eae7de;
+  --color-ink-muted: #a49d8d;
+  --color-ink-faint: #7b7565;
+
+  /* Stays mid-toned so white button text keeps its contrast. */
+  --color-brand: #46614f;
+  --color-brand-hover: #567461;
+  --color-accent: #c99e6b;
+  --color-accent-soft: #2b2317;
+
+  --color-positive: #6fa37f;
+  --color-positive-soft: #1c2a20;
+  --color-warning: #d2a463;
+  --color-warning-soft: #2c2314;
+  --color-danger: #e08d82;
+  --color-danger-soft: #2f1d1a;
+  --color-info: #93b0cd;
+  --color-info-soft: #1b2430;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -78,6 +117,11 @@ body {
 
   select.field {
     @apply appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20fill%3D%27none%27%20stroke%3D%27%236b6459%27%20stroke-width%3D%271.5%27%3E%3Cpath%20d%3D%27m4%206%204%204%204-4%27%2F%3E%3C%2Fsvg%3E")] bg-[length:16px_16px] bg-[position:right_0.65rem_center] bg-no-repeat pr-9;
+  }
+
+  /* Same chevron, lightened — the stroke colour is baked into the data URI. */
+  :root[data-theme="dark"] select.field {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20fill%3D%27none%27%20stroke%3D%27%23a49d8d%27%20stroke-width%3D%271.5%27%3E%3Cpath%20d%3D%27m4%206%204%204%204-4%27%2F%3E%3C%2Fsvg%3E");
   }
 
   .label {

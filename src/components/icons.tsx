@@ -103,6 +103,26 @@ export const FileIcon = (props: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const SunIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
+  </Icon>
+);
+
+export const MoonIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.2 8.2 0 1 0 9.4 9.4Z" />
+  </Icon>
+);
+
+export const MonitorIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <rect x="2.8" y="4.2" width="18.4" height="12.6" rx="1.8" />
+    <path d="M8.5 20.3h7M12 16.8v3.5" />
+  </Icon>
+);
+
 export const SignOutIcon = (props: SVGProps<SVGSVGElement>) => (
   <Icon {...props}>
     <path d="M15 4.8h3.2a1.8 1.8 0 0 1 1.8 1.8v10.8a1.8 1.8 0 0 1-1.8 1.8H15" />

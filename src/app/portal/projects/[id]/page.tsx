@@ -110,8 +110,11 @@ export default async function PortalProjectPage({
                       aria-hidden="true"
                       className={cn(
                         "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                        // text-surface, not text-white: the tick must invert
+                        // with the theme, since positive is a light green in
+                        // dark mode.
                         task.is_done
-                          ? "border-positive bg-positive text-white"
+                          ? "border-positive bg-positive text-surface"
                           : "border-line",
                       )}
                     >

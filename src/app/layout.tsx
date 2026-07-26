@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 
+import { ThemeScript } from "@/components/theme-script";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -29,7 +31,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${fraunces.variable}`}
+      // The theme script sets data-theme before React hydrates.
+      suppressHydrationWarning
+    >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

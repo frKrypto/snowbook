@@ -104,6 +104,11 @@ Each is a new table plus a route group alongside the existing ones.
 
 ## Changelog
 
+- **Dark mode added.** Theme-aware design tokens plus a light/dark/system
+  toggle. An inline script resolves the preference before first paint, which is
+  why `globals.css` only carries a `[data-theme="dark"]` block and no
+  `prefers-color-scheme` duplicate.
+
 - **File delivery added.** Uploads go browser-to-Storage against a private
   bucket, downloads use 60-second signed URLs, and isolation is covered by the
   RLS suite for both the table and `storage.objects`.
