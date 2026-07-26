@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/*
+ * Snowbook design tokens.
+ * Warm, editorial neutrals with a brass accent — closer to a studio brand
+ * than a generic dashboard. Keep new colours in this block so the palette
+ * stays in one place.
+ */
+@theme {
+  --color-canvas: #faf8f5;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f4f1ec;
+
+  --color-line: #e7e2d9;
+  --color-line-strong: #d6cfc2;
+
+  --color-ink: #191c19;
+  --color-ink-muted: #6b6459;
+  --color-ink-faint: #98907f;
+
+  --color-brand: #1f2a24;
+  --color-brand-hover: #2c3a32;
+  --color-accent: #a87c4f;
+  --color-accent-soft: #f3ebe0;
+
+  --color-positive: #3f6b4c;
+  --color-positive-soft: #e8f0e7;
+  --color-warning: #97652a;
+  --color-warning-soft: #f8eedd;
+  --color-danger: #9b3b32;
+  --color-danger-soft: #f8e8e5;
+  --color-info: #3f5872;
+  --color-info-soft: #e8eef4;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman",
+    serif;
+
+  --radius-card: 0.875rem;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Numeric columns (money, quantities) line up better with tabular figures. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shared form control look, so every input across the app matches. */
+.field {
+  @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink
+    shadow-[0_1px_1px_rgba(25,28,25,0.02)] transition
+    placeholder:text-ink-faint
+    focus:border-line-strong focus:outline-none focus:ring-2 focus:ring-brand/10;
+}
+
+select.field {
+  @apply appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20fill%3D%27none%27%20stroke%3D%27%236b6459%27%20stroke-width%3D%271.5%27%3E%3Cpath%20d%3D%27m4%206%204%204%204-4%27%2F%3E%3C%2Fsvg%3E")] bg-[length:16px_16px] bg-[position:right_0.65rem_center] bg-no-repeat pr-9;
+}
+
+.label {
+  @apply mb-1.5 block text-xs font-medium tracking-wide text-ink-muted uppercase;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
