@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useId, useMemo, useState } from "react";
+import { useActionState, useId, useMemo, useRef, useState } from "react";
 
 import type { ActionState } from "@/lib/action-state";
 import { PlusIcon, TrashIcon } from "@/components/icons";
@@ -28,8 +28,8 @@ interface Row {
   rate: string;
 }
 
-const blankRow = (): Row => ({
-  key: crypto.randomUUID(),
+const emptyRow = (key: string): Row => ({
+  key,
   description: "",
   quantity: "1",
   rate: "",
@@ -71,6 +71,18 @@ export function InvoiceForm({
     invoice?.project_id ?? defaultProjectId ?? "",
   );
   const [taxRate, setTaxRate] = useState(String(invoice?.tax_rate ?? "0"));
+
+  /*
+   * Row keys come from a counter rather than crypto.randomUUID(), for two
+   * reasons: randomUUID is undefined outside a secure context (any dev server
+   * reached over a LAN IP rather than localhost), which made "Add line" throw
+   * and silently do nothing; and a random value differs between the server
+   * render and hydration, which desynced the input ids.
+   */
+  const FIRST_ROW_KEY = "line-0";
+  const keySeq = useRef(1); // line-0 belongs to the initial blank row.
+  const nextKey = () => `line-${keySeq.current++}`;
+
   const [rows, setRows] = useState<Row[]>(() =>
     lineItems && lineItems.length > 0
       ? lineItems.map((item) => ({
@@ -79,7 +91,7 @@ export function InvoiceForm({
           quantity: String(item.quantity),
           rate: String(item.rate),
         }))
-      : [blankRow()],
+      : [emptyRow(FIRST_ROW_KEY)],
   );
 
   const clientProjects = useMemo(
@@ -284,7 +296,7 @@ export function InvoiceForm({
                       onClick={() =>
                         setRows((current) =>
                           current.length === 1
-                            ? [blankRow()]
+                            ? [emptyRow(nextKey())]
                             : current.filter((entry) => entry.key !== row.key),
                         )
                       }
@@ -304,7 +316,7 @@ export function InvoiceForm({
             variant="ghost"
             size="sm"
             className="mt-3"
-            onClick={() => setRows((current) => [...current, blankRow()])}
+            onClick={() => setRows((current) => [...current, emptyRow(nextKey())])}
           >
             <PlusIcon className="h-4 w-4" />
             Add line

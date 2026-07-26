@@ -56,25 +56,33 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Numeric columns (money, quantities) line up better with tabular figures. */
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
+/*
+ * These shared classes live in the components layer so that utilities still
+ * win over them. Unlayered CSS beats layered CSS in the cascade, which would
+ * otherwise let `.label { display: block }` override a `sm:hidden` sitting on
+ * the same element.
+ */
+@layer components {
+  /* Numeric columns (money, quantities) line up better with tabular figures. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 
-/* Shared form control look, so every input across the app matches. */
-.field {
-  @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink
-    shadow-[0_1px_1px_rgba(25,28,25,0.02)] transition
-    placeholder:text-ink-faint
-    focus:border-line-strong focus:outline-none focus:ring-2 focus:ring-brand/10;
-}
+  /* Shared form control look, so every input across the app matches. */
+  .field {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink
+      shadow-[0_1px_1px_rgba(25,28,25,0.02)] transition
+      placeholder:text-ink-faint
+      focus:border-line-strong focus:outline-none focus:ring-2 focus:ring-brand/10;
+  }
 
-select.field {
-  @apply appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20fill%3D%27none%27%20stroke%3D%27%236b6459%27%20stroke-width%3D%271.5%27%3E%3Cpath%20d%3D%27m4%206%204%204%204-4%27%2F%3E%3C%2Fsvg%3E")] bg-[length:16px_16px] bg-[position:right_0.65rem_center] bg-no-repeat pr-9;
-}
+  select.field {
+    @apply appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2016%2016%27%20fill%3D%27none%27%20stroke%3D%27%236b6459%27%20stroke-width%3D%271.5%27%3E%3Cpath%20d%3D%27m4%206%204%204%204-4%27%2F%3E%3C%2Fsvg%3E")] bg-[length:16px_16px] bg-[position:right_0.65rem_center] bg-no-repeat pr-9;
+  }
 
-.label {
-  @apply mb-1.5 block text-xs font-medium tracking-wide text-ink-muted uppercase;
+  .label {
+    @apply mb-1.5 block text-xs font-medium tracking-wide text-ink-muted uppercase;
+  }
 }
 
 @media print {
