@@ -23,12 +23,15 @@ before any client account is handed out.
   dates, and a per-project checklist
 - Invoices: line items with auto-calculated subtotal/tax/total, draft →
   sent → paid/overdue, manual payment recording for money taken offline
+- Delivery: upload finished films and stills against a project; they appear
+  in that client's portal immediately
 - Dashboard: active projects, outstanding and overdue totals, upcoming
   shoots, recent activity
 
 **Client portal** (`/portal`)
 
 - Read-only view of their own projects with a stage timeline and checklist
+- Downloads of the files delivered against their projects
 - Their invoices, with a "Pay now" PayPal checkout
 - Dashboard showing active projects and anything outstanding
 
@@ -54,6 +57,8 @@ order:
 
 1. `20260101000000_init.sql` — tables, enums, triggers
 2. `20260101000001_rls.sql` — row level security policies
+3. `20260101000002_deliverables.sql` — file delivery table, the private
+   `deliverables` storage bucket, and its storage policies
 
 Or, with the Supabase CLI linked to your project:
 
@@ -115,6 +120,31 @@ recording is idempotent, so the invoice can't be double-credited if both land.
 For local webhook testing, expose your dev server with a tunnel
 (`ngrok http 3000`) and point the webhook at the tunnel URL.
 
+## File delivery
+
+Finished files are uploaded against a project from its admin page and show up
+in that client's portal straight away.
+
+The third migration creates a **private** `deliverables` bucket, so nothing is
+reachable by URL alone. Objects are stored under a key beginning with the
+project id (`<project_id>/<random>-<filename>`), and the storage policies read
+that leading segment to decide who may see the object — which is what keeps one
+client's delivery out of another's portal.
+
+Two details worth knowing:
+
+- **Uploads go straight from the browser to Storage**, not through a server
+  action. Vercel caps a server action body at roughly 4.5MB, which no video
+  clears. The row indexing the file is written afterwards by a server action.
+- **Downloads use signed URLs that expire after 60 seconds**, minted only after
+  the caller's own session has passed both the table and storage policies. A
+  copied link goes stale almost immediately.
+
+Supabase enforces a global per-file upload cap that is lower than the bucket's
+own limit on smaller plans (50MB on free at the time of writing). Raise it under
+**Project Settings → Storage** before delivering full-resolution video, and keep
+an eye on storage cost — video is heavy.
+
 ## Inviting a client
 
 From a client's detail page, **Send portal invite** emails them a link to set
@@ -137,7 +167,8 @@ enabled and denies by default:
   `profiles`
 - Admins get full access to everything
 - Clients can only ever `SELECT`, and only rows reachable from their own
-  `client_id`
+  `client_id` — including delivered files, in both the table and the storage
+  bucket
 - **Draft invoices are invisible to clients** — the policy filters on
   `status <> 'draft'`, so an invoice appears in the portal only once the admin
   marks it sent
@@ -207,8 +238,9 @@ A couple of things worth knowing:
 - Partial payments are modelled as separate invoices against the same project —
   a deposit invoice and a final invoice — rather than part-payments on one
   invoice.
-- File delivery isn't in this MVP. Supabase Storage with a policy mirroring the
-  invoice policies would be the natural place for it.
+- Delivered files live in Supabase Storage. That keeps everything in one place,
+  but full-resolution video gets expensive; moving to external links (Vimeo,
+  Frame.io) later would only touch the deliverables table and its panel.
 
 ## Scripts
 

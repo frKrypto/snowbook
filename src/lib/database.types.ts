@@ -258,6 +258,40 @@ export interface Database {
           },
         ];
       };
+      deliverables: {
+        Row: {
+          id: string;
+          project_id: string;
+          title: string | null;
+          file_name: string;
+          storage_path: string;
+          content_type: string | null;
+          size_bytes: number | null;
+          created_at: Timestamp;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          title?: string | null;
+          file_name: string;
+          storage_path: string;
+          content_type?: string | null;
+          size_bytes?: number | null;
+        };
+        Update: {
+          title?: string | null;
+          file_name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deliverables_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -282,3 +316,4 @@ export type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
 export type InvoiceLineItem =
   Database["public"]["Tables"]["invoice_line_items"]["Row"];
+export type Deliverable = Database["public"]["Tables"]["deliverables"]["Row"];

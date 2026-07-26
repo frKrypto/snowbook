@@ -74,9 +74,9 @@ change of the two in practice. Needs a decision either way.
    `globals.css` has a `no-print` hook, so this is mostly print styles plus a
    route.
 
-3. **File delivery.** The one item from the original auth notes that was not
-   built. Supabase Storage with policies mirroring the invoice policies is the
-   natural home.
+3. **Per-file titles and reordering on deliveries.** Files currently show their
+   filename; letting the studio label them ("Highlight film", "Full ceremony")
+   and set an order would make the portal read better.
 
 ## Known limitations
 
@@ -101,3 +101,12 @@ Worth knowing, none of them urgent:
 Left for later by design, and the structure leaves room for each: contracts and
 e-signatures, scheduling, automated email sequences, questionnaires and forms.
 Each is a new table plus a route group alongside the existing ones.
+
+## Changelog
+
+- **File delivery added.** Uploads go browser-to-Storage against a private
+  bucket, downloads use 60-second signed URLs, and isolation is covered by the
+  RLS suite for both the table and `storage.objects`.
+- **Invoice form fixed.** It keyed rows off `crypto.randomUUID()`, which is
+  undefined outside a secure context, so the whole line-items form collapsed
+  when the app was opened over a LAN IP rather than localhost.

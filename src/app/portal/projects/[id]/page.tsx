@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { DeliverablesList } from "@/components/deliverables-list";
 import { CheckIcon } from "@/components/icons";
 import { ProjectTimeline } from "@/components/project-timeline";
 import { InvoiceListItem } from "@/components/records";
@@ -40,19 +41,25 @@ export default async function PortalProjectPage({
 
   if (!project) notFound();
 
-  const [{ data: tasks }, { data: invoices }] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, name, is_done, due_date")
-      .eq("project_id", id)
-      .order("position")
-      .order("created_at"),
-    supabase
-      .from("invoices")
-      .select("id, invoice_number, title, status, due_date, total")
-      .eq("project_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: tasks }, { data: invoices }, { data: deliverables }] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, name, is_done, due_date")
+        .eq("project_id", id)
+        .order("position")
+        .order("created_at"),
+      supabase
+        .from("invoices")
+        .select("id, invoice_number, title, status, due_date, total")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("deliverables")
+        .select("*")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
 
   const doneCount = (tasks ?? []).filter((task) => task.is_done).length;
 
@@ -70,6 +77,16 @@ export default async function PortalProjectPage({
             <CardHeader title="Where things stand" />
             <ProjectTimeline status={project.status} />
           </Card>
+
+          {deliverables && deliverables.length > 0 ? (
+            <Card className="border-accent/30">
+              <CardHeader
+                title="Your files"
+                description="Download links stay available here — grab them whenever you need."
+              />
+              <DeliverablesList deliverables={deliverables} />
+            </Card>
+          ) : null}
 
           {project.description ? (
             <Card>

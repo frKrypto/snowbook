@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { deleteProjectAction } from "@/app/admin/projects/actions";
+import { DeliverablesPanel } from "@/app/admin/projects/[id]/deliverables-panel";
 import { TaskChecklist } from "@/app/admin/projects/[id]/task-checklist";
 import { ConfirmForm } from "@/components/confirm-form";
 import { PlusIcon } from "@/components/icons";
@@ -42,19 +43,25 @@ export default async function ProjectDetailPage({
 
   if (!project) notFound();
 
-  const [{ data: tasks }, { data: invoices }] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("project_id", id)
-      .order("position")
-      .order("created_at"),
-    supabase
-      .from("invoices")
-      .select("id, invoice_number, title, status, due_date, total, amount_paid")
-      .eq("project_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: tasks }, { data: invoices }, { data: deliverables }] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("*")
+        .eq("project_id", id)
+        .order("position")
+        .order("created_at"),
+      supabase
+        .from("invoices")
+        .select("id, invoice_number, title, status, due_date, total, amount_paid")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("deliverables")
+        .select("*")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
 
   const client = project.clients;
   const doneCount = (tasks ?? []).filter((task) => task.is_done).length;
@@ -125,6 +132,23 @@ export default async function ProjectDetailPage({
               }
             />
             <TaskChecklist projectId={project.id} tasks={tasks ?? []} />
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Delivery"
+              description={
+                deliverables && deliverables.length > 0
+                  ? `${deliverables.length} ${
+                      deliverables.length === 1 ? "file" : "files"
+                    } visible to the client`
+                  : "Files you upload here appear in the client's portal straight away."
+              }
+            />
+            <DeliverablesPanel
+              projectId={project.id}
+              deliverables={deliverables ?? []}
+            />
           </Card>
 
           <Card>

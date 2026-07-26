@@ -82,6 +82,27 @@ export const MailIcon = (props: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const DownloadIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5" />
+    <path d="M4.5 18.5h15" />
+  </Icon>
+);
+
+export const UploadIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M12 19V8M7.5 12.5 12 8l4.5 4.5" />
+    <path d="M4.5 5h15" />
+  </Icon>
+);
+
+export const FileIcon = (props: SVGProps<SVGSVGElement>) => (
+  <Icon {...props}>
+    <path d="M13.5 3.5H7a1.8 1.8 0 0 0-1.8 1.8v13.4A1.8 1.8 0 0 0 7 20.5h10a1.8 1.8 0 0 0 1.8-1.8V8.8Z" />
+    <path d="M13.5 3.5v4.2a1 1 0 0 0 1 1h4.3" />
+  </Icon>
+);
+
 export const SignOutIcon = (props: SVGProps<SVGSVGElement>) => (
   <Icon {...props}>
     <path d="M15 4.8h3.2a1.8 1.8 0 0 1 1.8 1.8v10.8a1.8 1.8 0 0 1-1.8 1.8H15" />

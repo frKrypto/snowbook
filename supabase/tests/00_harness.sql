@@ -1,5 +1,33 @@
 -- Minimal stand-in for the parts of a Supabase database the migrations rely on.
 create schema if not exists auth;
+create schema if not exists storage;
+
+-- Storage stand-ins. Enough shape for the bucket insert and the objects
+-- policies in the deliverables migration to apply and be exercised.
+create table storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint
+);
+
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets (id),
+  name text not null,
+  owner uuid
+);
+
+alter table storage.objects enable row level security;
+
+-- Mirrors Supabase's helper: splits an object key into its path segments.
+create or replace function storage.foldername(name text)
+returns text[]
+language sql
+immutable
+as $$
+  select string_to_array(name, '/');
+$$;
 
 create table auth.users (
   id uuid primary key default gen_random_uuid(),
@@ -32,6 +60,8 @@ end $$;
 
 grant usage on schema public to anon, authenticated, service_role;
 grant usage on schema auth to anon, authenticated, service_role;
+grant usage on schema storage to anon, authenticated, service_role;
+grant all on all tables in schema storage to anon, authenticated, service_role;
 alter default privileges in schema public
   grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public

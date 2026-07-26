@@ -94,6 +94,24 @@ select public.assert_true(
   'totals recalculated after a line item was deleted');
 
 -- ---------------------------------------------------------------------------
+-- Deliverables (fixtures)
+-- ---------------------------------------------------------------------------
+
+insert into public.deliverables (project_id, file_name, storage_path, size_bytes) values
+  ('33333333-3333-3333-3333-333333333331', 'a-highlight.mp4',
+   '33333333-3333-3333-3333-333333333331/abc-a-highlight.mp4', 1048576),
+  ('33333333-3333-3333-3333-333333333332', 'b-highlight.mp4',
+   '33333333-3333-3333-3333-333333333332/def-b-highlight.mp4', 2097152);
+
+insert into storage.objects (bucket_id, name) values
+  ('deliverables', '33333333-3333-3333-3333-333333333331/abc-a-highlight.mp4'),
+  ('deliverables', '33333333-3333-3333-3333-333333333332/def-b-highlight.mp4');
+
+select public.assert_true(
+  (select not public from storage.buckets where id = 'deliverables'),
+  'deliverables bucket exists and is private');
+
+-- ---------------------------------------------------------------------------
 -- Client A's view
 -- ---------------------------------------------------------------------------
 
@@ -119,6 +137,18 @@ select public.assert_eq(
 select public.assert_eq((select count(*) from public.invoice_line_items), 1,
   'client sees line items only for visible invoices');
 
+select public.assert_eq((select count(*) from public.deliverables), 1,
+  'client sees only deliverables on their own projects');
+select public.assert_true(
+  (select file_name = 'a-highlight.mp4' from public.deliverables),
+  'and it is their own file, not the other client''s');
+select public.assert_eq((select count(*) from storage.objects), 1,
+  'client can reach only their own project''s storage objects');
+select public.assert_true(
+  (select name like '33333333-3333-3333-3333-333333333331/%'
+   from storage.objects),
+  'the reachable object is under their own project folder');
+
 -- Writes must all fail.
 do $$
 begin
@@ -139,6 +169,25 @@ begin
     raise exception 'FAIL: client was able to insert a project';
   exception when insufficient_privilege then
     raise notice 'ok: client cannot insert a project';
+  end;
+
+  begin
+    insert into public.deliverables (project_id, file_name, storage_path)
+    values (
+      '33333333-3333-3333-3333-333333333331', 'sneaky.mp4',
+      '33333333-3333-3333-3333-333333333331/sneaky.mp4'
+    );
+    raise exception 'FAIL: client was able to add a deliverable';
+  exception when insufficient_privilege then
+    raise notice 'ok: client cannot add a deliverable';
+  end;
+
+  begin
+    insert into storage.objects (bucket_id, name)
+    values ('deliverables', '33333333-3333-3333-3333-333333333331/sneaky.mp4');
+    raise exception 'FAIL: client was able to upload to storage';
+  exception when insufficient_privilege then
+    raise notice 'ok: client cannot upload to storage';
   end;
 
   begin
@@ -199,6 +248,14 @@ select public.assert_eq(
   (select count(*) from public.invoices
    where client_id = '11111111-1111-1111-1111-111111111111'), 0,
   'client B cannot reach client A''s invoices');
+select public.assert_eq(
+  (select count(*) from public.deliverables
+   where project_id = '33333333-3333-3333-3333-333333333331'), 0,
+  'client B cannot reach client A''s deliverables');
+select public.assert_eq(
+  (select count(*) from storage.objects
+   where name like '33333333-3333-3333-3333-333333333331/%'), 0,
+  'client B cannot reach client A''s stored files');
 
 -- ---------------------------------------------------------------------------
 -- Admin sees everything
@@ -211,6 +268,10 @@ select public.assert_eq((select count(*) from public.projects), 2, 'admin sees a
 select public.assert_eq((select count(*) from public.invoices), 3,
   'admin sees all invoices including drafts');
 select public.assert_eq((select count(*) from public.tasks), 2, 'admin sees all tasks');
+select public.assert_eq((select count(*) from public.deliverables), 2,
+  'admin sees all deliverables');
+select public.assert_eq((select count(*) from storage.objects), 2,
+  'admin sees all stored files');
 
 insert into public.clients (name, email, status) values ('Admin Made', 'made@example.com', 'lead');
 select public.assert_eq((select count(*) from public.clients), 3, 'admin can create clients');
@@ -231,6 +292,10 @@ select set_config('test.user_id', '', false);
 select public.assert_eq((select count(*) from public.clients), 0, 'anon sees no clients');
 select public.assert_eq((select count(*) from public.invoices), 0, 'anon sees no invoices');
 select public.assert_eq((select count(*) from public.projects), 0, 'anon sees no projects');
+select public.assert_eq((select count(*) from public.deliverables), 0,
+  'anon sees no deliverables');
+select public.assert_eq((select count(*) from storage.objects), 0,
+  'anon sees no stored files');
 
 reset role;
 
